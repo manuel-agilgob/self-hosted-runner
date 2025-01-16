@@ -1,0 +1,84 @@
+pipeline {
+    agent any
+
+    tools {nodejs "node23"}
+
+    stages {
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    if (fileExists('package.json')) {
+                        sh 'npm install'
+                    } else {
+                        error 'package.json not found'
+                    }
+                }
+            }
+        }
+
+        stage('Run Cypress Tests in Parallel') {
+
+            parallel {
+                stage('Run Actions Tests') {
+                    steps {
+                        script {
+                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/actions.cy.js"'
+                        }
+                    }
+                }
+                stage('Run Assertions Tests') {
+                    steps {
+                        script {
+                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/assertions.cy.js"'
+                        }
+                    }
+                }
+                stage('Run Location Tests') {
+                    steps {
+                        script {
+                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/location.cy.js"'
+                        }
+                    }
+                }
+            }
+            
+        }
+
+        stage('Execute tests one by one') {
+            steps {
+                script {
+                    sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/actions.cy.js" --reporter cypress-mochawesome-reporter'
+                    sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/assertions.cy.js" --reporter cypress-mochawesome-reporter'
+                 
+                }
+            }
+        }
+
+        stage('Create and extract reports') {
+            steps {
+                script {
+                    sh 'npx mochawesome-merge cypress/reports/html/.jsons/*.json > cypress/reports/combined.json'
+                    sh 'npx mochawesome-report-generator cypress/reports/combined.json -o cypress/reports/ -f ReportCombined.html'
+
+                    
+                    archiveArtifacts artifacts: 'cypress/reports/**/*', allowEmptyArchive: true
+                   
+                }
+            }
+        }
+
+    }
+
+    post {
+        always {
+            echo 'Pipeline completed.'
+        }
+        unstable {
+            echo 'Pipeline completed with some unstable stages.'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
+    }
+
+}
