@@ -1,0 +1,219 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 7,
+    "passes": 7,
+    "pending": 0,
+    "failures": 0,
+    "start": "2025-01-16T03:28:50.077Z",
+    "end": "2025-01-16T03:28:53.130Z",
+    "duration": 3053,
+    "testsRegistered": 7,
+    "passPercent": 100,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "05d54eb5-c9c4-4314-9646-8d502e0bcfc7",
+      "title": "",
+      "fullFile": "cypress\\e2e\\grupo1\\cookies.cy.js",
+      "file": "cypress\\e2e\\grupo1\\cookies.cy.js",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "20b6cb2a-e667-4cb8-b8e2-8715b5a08a6e",
+          "title": "Cookies",
+          "fullFile": "",
+          "file": "",
+          "beforeHooks": [],
+          "afterHooks": [],
+          "tests": [
+            {
+              "title": "cy.getCookie() - get a browser cookie",
+              "fullTitle": "Cookies cy.getCookie() - get a browser cookie",
+              "timedOut": null,
+              "duration": 509,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "// https://on.cypress.io/getcookie\ncy.get('#getCookie .set-a-cookie').click();\n// cy.getCookie() yields a cookie object\ncy.getCookie('token').should('have.property', 'value', '123ABC');",
+              "err": {},
+              "uuid": "0c0b57d6-8607-4c6d-9ad2-fadf84a2b685",
+              "parentUUID": "20b6cb2a-e667-4cb8-b8e2-8715b5a08a6e",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "cy.getCookies() - get browser cookies for the current domain",
+              "fullTitle": "Cookies cy.getCookies() - get browser cookies for the current domain",
+              "timedOut": null,
+              "duration": 261,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "// https://on.cypress.io/getcookies\ncy.getCookies().should('be.empty');\ncy.get('#getCookies .set-a-cookie').click();\n// cy.getCookies() yields an array of cookies\ncy.getCookies().should('have.length', 1).should(cookies => {\n  // each cookie has these properties\n  expect(cookies[0]).to.have.property('name', 'token');\n  expect(cookies[0]).to.have.property('value', '123ABC');\n  expect(cookies[0]).to.have.property('httpOnly', false);\n  expect(cookies[0]).to.have.property('secure', false);\n  expect(cookies[0]).to.have.property('domain');\n  expect(cookies[0]).to.have.property('path');\n});",
+              "err": {},
+              "uuid": "ee6e98ad-65aa-484c-aeb2-c98d5e50aa61",
+              "parentUUID": "20b6cb2a-e667-4cb8-b8e2-8715b5a08a6e",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "cy.getAllCookies() - get all browser cookies",
+              "fullTitle": "Cookies cy.getAllCookies() - get all browser cookies",
+              "timedOut": null,
+              "duration": 165,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "// https://on.cypress.io/getallcookies\ncy.getAllCookies().should('be.empty');\ncy.setCookie('key', 'value');\ncy.setCookie('key', 'value', {\n  domain: '.example.com'\n});\n// cy.getAllCookies() yields an array of cookies\ncy.getAllCookies().should('have.length', 2).should(cookies => {\n  // each cookie has these properties\n  expect(cookies[0]).to.have.property('name', 'key');\n  expect(cookies[0]).to.have.property('value', 'value');\n  expect(cookies[0]).to.have.property('httpOnly', false);\n  expect(cookies[0]).to.have.property('secure', false);\n  expect(cookies[0]).to.have.property('domain');\n  expect(cookies[0]).to.have.property('path');\n  expect(cookies[1]).to.have.property('name', 'key');\n  expect(cookies[1]).to.have.property('value', 'value');\n  expect(cookies[1]).to.have.property('httpOnly', false);\n  expect(cookies[1]).to.have.property('secure', false);\n  expect(cookies[1]).to.have.property('domain', '.example.com');\n  expect(cookies[1]).to.have.property('path');\n});",
+              "err": {},
+              "uuid": "3dec3dc7-7e75-4a25-afa1-7957a8afae6e",
+              "parentUUID": "20b6cb2a-e667-4cb8-b8e2-8715b5a08a6e",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "cy.setCookie() - set a browser cookie",
+              "fullTitle": "Cookies cy.setCookie() - set a browser cookie",
+              "timedOut": null,
+              "duration": 170,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "// https://on.cypress.io/setcookie\ncy.getCookies().should('be.empty');\ncy.setCookie('foo', 'bar');\n// cy.getCookie() yields a cookie object\ncy.getCookie('foo').should('have.property', 'value', 'bar');",
+              "err": {},
+              "uuid": "143d6aef-ba9d-40f9-909b-9e311ffa2e5b",
+              "parentUUID": "20b6cb2a-e667-4cb8-b8e2-8715b5a08a6e",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "cy.clearCookie() - clear a browser cookie",
+              "fullTitle": "Cookies cy.clearCookie() - clear a browser cookie",
+              "timedOut": null,
+              "duration": 238,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "// https://on.cypress.io/clearcookie\ncy.getCookie('token').should('be.null');\ncy.get('#clearCookie .set-a-cookie').click();\ncy.getCookie('token').should('have.property', 'value', '123ABC');\n// cy.clearCookies() yields null\ncy.clearCookie('token');\ncy.getCookie('token').should('be.null');",
+              "err": {},
+              "uuid": "167b1852-f6e1-4117-8b4d-d3e168f0269c",
+              "parentUUID": "20b6cb2a-e667-4cb8-b8e2-8715b5a08a6e",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "cy.clearCookies() - clear browser cookies for the current domain",
+              "fullTitle": "Cookies cy.clearCookies() - clear browser cookies for the current domain",
+              "timedOut": null,
+              "duration": 240,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "// https://on.cypress.io/clearcookies\ncy.getCookies().should('be.empty');\ncy.get('#clearCookies .set-a-cookie').click();\ncy.getCookies().should('have.length', 1);\n// cy.clearCookies() yields null\ncy.clearCookies();\ncy.getCookies().should('be.empty');",
+              "err": {},
+              "uuid": "0fc2164b-5336-4c37-b962-cabff199cc3d",
+              "parentUUID": "20b6cb2a-e667-4cb8-b8e2-8715b5a08a6e",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "cy.clearAllCookies() - clear all browser cookies",
+              "fullTitle": "Cookies cy.clearAllCookies() - clear all browser cookies",
+              "timedOut": null,
+              "duration": 168,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "// https://on.cypress.io/clearallcookies\ncy.getAllCookies().should('be.empty');\ncy.setCookie('key', 'value');\ncy.setCookie('key', 'value', {\n  domain: '.example.com'\n});\ncy.getAllCookies().should('have.length', 2);\n// cy.clearAllCookies() yields null\ncy.clearAllCookies();\ncy.getAllCookies().should('be.empty');",
+              "err": {},
+              "uuid": "4545a458-b2b4-47db-9f4b-66d76f3695e3",
+              "parentUUID": "20b6cb2a-e667-4cb8-b8e2-8715b5a08a6e",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [
+            "0c0b57d6-8607-4c6d-9ad2-fadf84a2b685",
+            "ee6e98ad-65aa-484c-aeb2-c98d5e50aa61",
+            "3dec3dc7-7e75-4a25-afa1-7957a8afae6e",
+            "143d6aef-ba9d-40f9-909b-9e311ffa2e5b",
+            "167b1852-f6e1-4117-8b4d-d3e168f0269c",
+            "0fc2164b-5336-4c37-b962-cabff199cc3d",
+            "4545a458-b2b4-47db-9f4b-66d76f3695e3"
+          ],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 1751,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 2000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 2000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "7.0.1"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": false,
+        "reportFilename": "mochawesome",
+        "saveHtml": false,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.3"
+    },
+    "marge": {
+      "options": {
+        "overwrite": false,
+        "html": false,
+        "json": true,
+        "reportDir": "cypress\\reports\\html\\.jsons"
+      },
+      "version": "6.2.0"
+    }
+  }
+}

@@ -172,3 +172,5 @@ cython_debug/
 
 cypress\e2e\ejemplos-pruebas
 node_modules
+cypress\reports
+runner-results
