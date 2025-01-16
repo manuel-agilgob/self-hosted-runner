@@ -19,7 +19,7 @@ pipeline {
         stage('Run Cypress Tests') {
             steps {
                 script {
-                    sh 'npx cypress run'
+                    sh 'npx cypress run --heaadless'
                 }
             }
         }
