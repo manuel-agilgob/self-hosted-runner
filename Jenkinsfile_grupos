@@ -48,16 +48,6 @@ pipeline {
             
         }
 
-        // stage('Execute tests one by one') {
-        //     steps {
-        //         script {
-        //             sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/actions.cy.js" --reporter cypress-mochawesome-reporter'
-        //             sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/assertions.cy.js" --reporter cypress-mochawesome-reporter'
-                 
-        //         }
-        //     }
-        // }
-
         stage('Create and extract reports') {
             steps {
                 script {
@@ -79,9 +69,11 @@ pipeline {
         always {
             publishHTML([
                 reportName: 'Reporte Pruebas Cypress', 
-                reportDir: 'reports/',  // Ruta donde se encuentra el archivo HTML
-                reportFiles: 'Reporte.html',  // El archivo HTML específico que quieres mostrar
-                keepAll: true  // Mantener reportes anteriores si deseas
+                reportDir: 'reports/',  
+                reportFiles: 'Reporte.html',  
+                keepAll: true,
+                alwaysLinkToLastBuild: true,
+                allowMissing: false
             ])
         }
     }
