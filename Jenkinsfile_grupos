@@ -1,3 +1,7 @@
+// This is a basic Jenkinsfile that will run Cypress tests in parallel and generate a combined report at the end.
+// The tests are divided into three groups: actions, assertions and location.
+// The tests are executed in parallel and then one by one.
+
 pipeline {
     agent any
 
