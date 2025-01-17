@@ -61,12 +61,14 @@ pipeline {
         stage('Create and extract reports') {
             steps {
                 script {
+                    // Fusionar reportes JSON generados por Mochawesome
                     sh 'npx mochawesome-merge cypress/reports/html/.jsons/*.json > cypress/reports/combined.json'
-                    sh 'npx mochawesome-report-generator cypress/reports/combined.json -o cypress/reports/ -f ReportCombined.html'
-
                     
+                    // Generar un reporte HTML único con recursos embebidos
+                    sh 'npx mochawesome-report-generator cypress/reports/combined.json -o cypress/reports/ -f ReportCombined.html --inline=true'
+                    
+                    // Archivar todos los reportes generados
                     archiveArtifacts artifacts: 'cypress/reports/**/*', allowEmptyArchive: true
-                   
                 }
             }
         }
