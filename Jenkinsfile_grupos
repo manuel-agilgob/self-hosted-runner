@@ -45,35 +45,34 @@ pipeline {
                     }
                 }
             }
-            
         }
 
-        stage('Create and extract reports') {
-            steps {
-                script {
-                    // Fusionar reportes JSON generados por Mochawesome
-                    sh 'npx mochawesome-merge cypress/reports/html/.jsons/*.json > cypress/reports/combined.json'
-                    
-                    // Generar un reporte HTML único con recursos embebidos
-                    sh 'npx mochawesome-report-generator cypress/reports/combined.json -o cypress/reports/ -f ReportCombined.html --inline=true'
-                    
-                    // Archivar todos los reportes generados
-                    archiveArtifacts artifacts: 'cypress/reports/**/*', allowEmptyArchive: true
-                }
-            }
-        }
+       
 
     }
 
     post {
         always {
+
+            script {
+                    // Fusionar reportes JSON generados por Mochawesome
+                    sh 'npx mochawesome-merge reports/.jsons/*.json > reports/merged-report.json'
+                    
+                    // Generar un reporte HTML único con recursos embebidos
+                    sh 'npx marge reports/merged-report.json --reportFilename Reporte.html --reportDir reports --inline true'
+                    
+                    // Archivar todos los reportes generados
+                    archiveArtifacts artifacts: 'reports/Reporte.html', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'reports/**/**', allowEmptyArchive: true
+                }
+
             publishHTML([
                 reportName: 'Reporte Pruebas Cypress', 
                 reportDir: 'reports/',  
                 reportFiles: 'Reporte.html',  
                 keepAll: true,
-                alwaysLinkToLastBuild: true,
-                allowMissing: false
+                alwaysLinkToLastBuild: false,
+                allowMissing: true
             ])
         }
     }
