@@ -11,9 +11,7 @@ cypress/reports/
 runner-results
 
 # Reports
-reports/
-*.html
-*.json
+reports
 
 # Environment variables
 .env
