@@ -79,7 +79,8 @@ pipeline {
                     keepAll: true,
                     alwaysLinkToLastBuild: false,
                     allowMissing: false
-            ])
+                ]
+            )
         }
     }
 
