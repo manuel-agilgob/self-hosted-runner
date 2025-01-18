@@ -53,19 +53,27 @@ pipeline {
 
     post {
         always {
-
             script {
-                    // Fusionar reportes JSON generados por Mochawesome
-                    sh 'npx mochawesome-merge reports/.jsons/*.json > reports/merged-report.json'
-                    
-                    // Generar un reporte HTML único con recursos embebidos
-                    sh 'npx marge reports/merged-report.json --reportFilename Reporte.html --reportDir reports --inline true'
-                    
-                    // Archivar todos los reportes generados
-                    archiveArtifacts artifacts: 'reports/Reporte.html', allowEmptyArchive: true
-                    archiveArtifacts artifacts: 'reports/**/**', allowEmptyArchive: true
-                }
+                // Fusionar reportes JSON generados por Mochawesome
+                sh 'npx mochawesome-merge reports/.jsons/*.json > reports/merged-report.json'
+                
+                // Verificar que el archivo JSON fusionado fue creado correctamente
+                sh 'cat reports/merged-report.json'  // Verifica el contenido del archivo generado
 
+                // Generar un reporte HTML único con recursos embebidos
+                sh 'npx marge reports/merged-report.json --reportFilename Reporte.html --reportDir reports --inline true'
+                
+                // Verificar que el reporte HTML fue generado correctamente
+                sh 'ls -al reports'  // Lista el contenido del directorio reports
+                
+                // Archivar el reporte HTML generado
+                archiveArtifacts artifacts: 'reports/Reporte.html', allowEmptyArchive: true
+                
+                // Archivar todos los demás reportes generados (opcional)
+                archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
+            }
+
+            // Publicar el reporte HTML generado
             publishHTML([
                 reportName: 'Reporte Pruebas Cypress', 
                 reportDir: 'reports/',  
@@ -76,5 +84,6 @@ pipeline {
             ])
         }
     }
+
 
 }
