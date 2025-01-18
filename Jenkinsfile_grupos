@@ -57,9 +57,6 @@ pipeline {
                 // Fusionar reportes JSON generados por Mochawesome
                 sh 'npx mochawesome-merge reports/.jsons/*.json > reports/merged-report.json'
                 
-                // Verificar que el archivo JSON fusionado fue creado correctamente
-                sh 'cat reports/merged-report.json'  // Verifica el contenido del archivo generado
-
                 // Generar un reporte HTML único con recursos embebidos
                 sh 'npx marge reports/merged-report.json --reportFilename Reporte.html --reportDir reports --inline true'
                 
@@ -74,13 +71,14 @@ pipeline {
             }
 
             // Publicar el reporte HTML generado
-            publishHTML([
-                reportName: 'Reporte Pruebas Cypress', 
-                reportDir: 'reports/',  
-                reportFiles: 'Reporte.html',  
-                keepAll: true,
-                alwaysLinkToLastBuild: false,
-                allowMissing: true
+            publishHTML(
+                target: [
+                    reportName: 'Reporte Pruebas Cypress', 
+                    reportDir: 'reports/',  
+                    reportFiles: 'Reporte.html',  
+                    keepAll: true,
+                    alwaysLinkToLastBuild: false,
+                    allowMissing: true
             ])
         }
     }
