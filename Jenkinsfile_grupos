@@ -78,7 +78,7 @@ pipeline {
                     reportFiles: 'Reporte.html',  
                     keepAll: true,
                     alwaysLinkToLastBuild: false,
-                    allowMissing: true
+                    allowMissing: false
             ])
         }
     }
