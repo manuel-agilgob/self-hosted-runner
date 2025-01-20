@@ -58,7 +58,7 @@ pipeline {
                 sh 'npx mochawesome-merge reports/.jsons/*.json > reports/merged-report.json'
                 
                 // Generar un reporte HTML único con recursos embebidos
-                sh 'npx marge reports/merged-report.json --reportFilename Reporte.html --reportDir reports --inline true'
+                sh 'npx marge reports/merged-report.json --reportFilename Reporte.html --reportDir reports'
                 
                 // Verificar que el reporte HTML fue generado correctamente
                 sh 'ls -al reports'  // Lista el contenido del directorio reports
@@ -74,7 +74,7 @@ pipeline {
             publishHTML(
                 target: [
                     reportName: 'Reporte Pruebas Cypress', 
-                    reportDir: '.',  
+                    reportDir: 'reports',  
                     reportFiles: 'Reporte.html',  
                     keepAll: true,
                     alwaysLinkToLastBuild: false,
