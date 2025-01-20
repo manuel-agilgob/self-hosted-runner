@@ -64,10 +64,10 @@ pipeline {
                 sh 'ls -al reports'  // Lista el contenido del directorio reports
                 
                 // Archivar el reporte HTML generado
-                archiveArtifacts artifacts: 'reports/Reporte.html', allowEmptyArchive: true
+                // archiveArtifacts artifacts: 'reports/Reporte.html', allowEmptyArchive: true
                 
                 // Archivar todos los demás reportes generados (opcional)
-                archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
+                // archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
             }
 
             // Publicar el reporte HTML generado
