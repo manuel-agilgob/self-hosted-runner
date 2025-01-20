@@ -1,11 +1,8 @@
-# Establecer una imagen en particular como base para la imagen que se está creando
 FROM jenkins/jenkins:lts
-
-# Cambia al usuario root para instalar dependencias
 USER root
 
 # Actualiza los paquetes e instala las dependencias para ejecutar las pruebas
-# en cypress (el resto se instala como plugins en Jenkins)
+# en Cypress (el resto se instala como plugins en Jenkins)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgtk2.0-0 \
     libgtk-3-0 \
@@ -17,8 +14,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxtst6 \
     xauth \
     xvfb \
+    nano \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Retorna al usuario Jenkins
+# Desactivar CSP en Jenkins creando un script Groovy para configurarlo
+RUN mkdir -p /usr/share/jenkins/ref/init.groovy.d \
+    && echo 'System.setProperty("hudson.model.DirectoryBrowserSupport.CSP", "");' > /usr/share/jenkins/ref/init.groovy.d/disable-csp.groovy
+LABEL description="Jenkins con dependencias para ejecutar pruebas en Cypress, mostrar reportes de pruebas y desactivar CSP"
 USER jenkins
+
+
+
+
+# docker build -t jenkins-plus-cypress .
+# docker run -d \
+#     -p 8080:8080 -p 50000:50000 \
+#     --name cypress-jenkins-cont \
+#     --mount source=cypress_jenkins_data,target=/var/jenkins_home \
+#     custom-jenkins
