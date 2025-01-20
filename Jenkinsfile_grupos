@@ -74,7 +74,7 @@ pipeline {
             publishHTML(
                 target: [
                     reportName: 'Reporte Pruebas Cypress', 
-                    reportDir: 'reports/',  
+                    reportDir: 'reports/Reporte.html',  
                     reportFiles: 'Reporte.html',  
                     keepAll: true,
                     alwaysLinkToLastBuild: false,
