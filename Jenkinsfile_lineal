@@ -21,36 +21,26 @@ pipeline {
         }
 
         stage('Run Cypress Tests in Parallel with jenkins parallel') {
+            steps{
+                    script {
+                        sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/actions.cy.js" --quiet '
+                    }
 
-            parallel {
-                stage('Run Actions Tests') {
-                    steps {
-                        script {
-                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/actions.cy.js" --reporter=cypress-mochawesome-reporter'
-                        }
+                    script {
+                        sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/assertions.cy.js" --quiet'
                     }
-                }
-                stage('Run Assertions Tests') {
-                    steps {
-                        script {
-                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/assertions.cy.js" --reporter=cypress-mochawesome-reporter'
-                        }
+
+                    script {
+                        sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/location.cy.js" --quiet'
                     }
-                }
-                stage('Run Location Tests') {
-                    steps {
-                        script {
-                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/location.cy.js" --reporter=cypress-mochawesome-reporter'
-                        }
-                    }
-                }
+                }   
             }
-        }
+        
 
         // stage('Run Cypress Test in Parallel using cypress-parallel y usando tokens') {
         //     steps {
         //         script {
-        //              sh 'npx cypress-parallel -s cy:run -t 3 -d "cypress/e2e/grupo3_token/*.cy.js" -- --reporter=cypress-mochawesome-reporter'
+        //              sh 'npx cypress-parallel -s cy:run -t 3 -d "cypress/e2e/grupo3_token/*.cy.js" -- --reporter=cypress-mochawesome-reporter --quiet'
         //         }
         //     }
         // }
@@ -82,7 +72,7 @@ pipeline {
             )
 
             // Eliminar los reportes JSON generados
-            deleteDir()
+            // deleteDir()
         }
     }
 

@@ -12,7 +12,7 @@ context('Actions', () => {
 
     it('Usa el token para generar un artefacto', () => {
         const token = Cypress.env('TOKEN');
-        const filePath = path.join(__dirname, '..', '..', 'token.txt');
+        const filePath = 'reports/token_p1.txt';
         cy.task('writeFile', { filePath, content: token });
     });
 })
