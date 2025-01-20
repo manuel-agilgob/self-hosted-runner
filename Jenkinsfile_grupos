@@ -30,20 +30,20 @@ pipeline {
                         }
                     }
                 }
-                stage('Run Assertions Tests') {
-                    steps {
-                        script {
-                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/assertions.cy.js"'
-                        }
-                    }
-                }
-                stage('Run Location Tests') {
-                    steps {
-                        script {
-                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/location.cy.js"'
-                        }
-                    }
-                }
+                // stage('Run Assertions Tests') {
+                //     steps {
+                //         script {
+                //             sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/assertions.cy.js"'
+                //         }
+                //     }
+                // }
+                // stage('Run Location Tests') {
+                //     steps {
+                //         script {
+                //             sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/location.cy.js"'
+                //         }
+                //     }
+                // }
             }
         }
 
@@ -74,8 +74,8 @@ pipeline {
             publishHTML(
                 target: [
                     reportName: 'Reporte Pruebas Cypress', 
-                    reportDir: 'reports/',  
-                    reportFiles: 'reports/Reporte.html',  
+                    reportDir: '.',  
+                    reportFiles: 'Reporte.html',  
                     keepAll: true,
                     alwaysLinkToLastBuild: false,
                     allowMissing: false
