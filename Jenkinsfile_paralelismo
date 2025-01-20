@@ -1,0 +1,90 @@
+// Ejecuta pruebas de Cypress de muestra en paralelo
+//  - Paralelizando desde Jenkins
+//  - Paralelizando desde cypress-parallel
+
+pipeline {
+    agent any
+
+    tools {nodejs "node"}
+
+    stages {
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    if (fileExists('package.json')) {
+                        sh 'npm install'
+                    } else {
+                        error 'package.json not found'
+                    }
+                }
+            }
+        }
+
+        stage('Run Cypress Tests in Parallel with jenkins parallel') {
+
+            parallel {
+                stage('Run Actions Tests') {
+                    steps {
+                        script {
+                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/actions.cy.js"'
+                        }
+                    }
+                }
+                stage('Run Assertions Tests') {
+                    steps {
+                        script {
+                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/assertions.cy.js"'
+                        }
+                    }
+                }
+                stage('Run Location Tests') {
+                    steps {
+                        script {
+                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/location.cy.js"'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Run Cypress Test in Parallel using cypress-parallel y usando tokens') {
+            steps {
+                script {
+                     sh 'npx cypress-parallel -s cy:run -t 3 -d "cypress/e2e/grupo3_token/*.cy.js" -- --reporter=cypress-mochawesome-reporter'
+                }
+            }
+        }
+       
+
+    }
+
+    post {
+        always {
+
+            // Merge de los reportes JSON generados
+            script {
+                sh 'npx mochawesome-merge "reports/**/*.json" > reports/merged-report.json'
+                sh 'npx marge reports/merged-report.json --reportFilename Reporte.html --reportDir reports --inline=true'
+                archiveArtifacts artifacts: 'reports/Reporte.html', allowEmptyArchive: false
+                //archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
+            }
+
+            // Publicar el reporte HTML en Jenkins
+            publishHTML(
+                target: [
+                    reportName: 'Reporte Pruebas Cypress', 
+                    reportDir: 'reports',  
+                    reportFiles: 'Reporte.html',  
+                    keepAll: false,
+                    alwaysLinkToLastBuild: false,
+                    allowMissing: false
+                ]
+            )
+
+            // Eliminar los reportes JSON generados
+            deleteDir()
+        }
+    }
+
+
+}

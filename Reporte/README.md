@@ -33,3 +33,10 @@ Sigue los siguientes pasos para generar los reportes:
     ```sh
     rm -r reports/.json
     ```
+
+
+
+Notas : 
+    - Requiere instalar HTML Publisher plugin
+    - Requiere node plugin configurado como ejecutor con nombre 'node23'
+    
