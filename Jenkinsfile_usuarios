@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+    tools { nodejs "node" }
+
+    environment {
+        USUARIOS = ""
+    }
+
+    stages {
+        stage("Clean workspace") {
+            steps {
+                deleteDir()
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+
+        stage('Read userTypes') {
+            steps {
+                script {
+                    USUARIOS = sh(
+                        script: 'ls -d cypress/e2e/*/',
+                        returnStdout: true
+                    ).trim().split('\n')
+                    echo "Carpetas por usuario: ${USUARIOS}"
+                }
+            }
+        }
+
+        stage('Process userType folders') {
+            steps {
+                script {
+                    def tasks = [:]
+                    USUARIOS.each { usuario ->
+                        tasks[usuario] = {
+                            echo "Procesando usuario: ${usuario}"
+                            sleep(time: 60, unit: 'SECONDS')
+                        }
+                    }
+                    parallel tasks
+                }
+            }
+        }
+    }
+}

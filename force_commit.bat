@@ -12,4 +12,4 @@ git push --force
 
 :: Mensaje de finalización
 echo Operación completada: los cambios se han añadido, el commit ha sido modificado y los cambios se han empujado.
-pause
+
