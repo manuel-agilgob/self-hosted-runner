@@ -1,48 +1,66 @@
-pipeline {
-    agent any
-    tools { nodejs "node" }
+// Scripted Pipeline para ejecutar tareas en paralelo para cada usuario
 
-    environment {
-        USUARIOS = ""
+node {
+
+
+    stage('Checkout') {
+        echo "Clonando repositorio..."
+        deleteDir()
+        checkout scmGit(branches: [[name: '*/dev']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/manuel-agilgob/self-hosted-runner.git']])
     }
 
-    stages {
-        stage("Clean workspace") {
-            steps {
-                deleteDir()
-            }
-        }
+    stage('Instalar dependencias') {
+        echo "Instalando dependencias..."
+        sh "npm install"  
+    }
 
-        stage('Install Dependencies') {
-            steps {
-                sh 'npm install'
-            }
-        }
 
-        stage('Read userTypes') {
-            steps {
-                script {
-                    USUARIOS = sh(
-                        script: 'ls -d cypress/e2e/*/',
-                        returnStdout: true
-                    ).trim().split('\n')
-                    echo "Carpetas por usuario: ${USUARIOS}"
+
+    def rutaPruebas = "cypress/e2e"
+    def carpetasUsuarios = sh(script: "ls ${rutaPruebas}", returnStdout: true).trim().split('\n')
+    def colaUsuarios = carpetasUsuarios as List
+    echo "Carpetas por usuario: ${carpetasUsuarios}"
+
+
+    def carpetaUsuarioRunner1 = ''
+    def carpetaUsuarioRunner2 = ''
+
+    stage('Generacion dinamica de stages de pruebas') {
+        def parallelStages = [:]
+
+
+        // Definir las etapas paralelas
+        parallelStages['Runner 1'] = {
+            while (!colaUsuarios.isEmpty()){
+                carpetaUsuarioRunner1 = colaUsuarios.remove(0)  // Remover el primer usuario
+                stage("Stage for ${rutaPruebas}/${carpetaUsuarioRunner1}") {
+                    echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner1}"
+                    sh(script: "npx cypress run --spec ${rutaPruebas}/${carpetaUsuarioRunner1}/*cy.js --reporter mochawesome --quiet")
                 }
             }
         }
 
-        stage('Process userType folders') {
-            steps {
-                script {
-                    def tasks = [:]
-                    USUARIOS.each { usuario ->
-                        tasks[usuario] = {
-                            echo "Procesando usuario: ${usuario}"
-                            sleep(time: 60, unit: 'SECONDS')
-                        }
-                    }
-                    parallel tasks
+
+        parallelStages['Runner 2'] = {
+            while (!colaUsuarios.isEmpty()){
+                carpetaUsuarioRunner2 = colaUsuarios.remove(0)  // Remover el primer usuario
+                stage("Stage for ${rutaPruebas}/${carpetaUsuarioRunner2}") {
+                    echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner2}"
+                    sh(script: "npx cypress run --spec ${rutaPruebas}/${carpetaUsuarioRunner2}/*cy.js --reporter mochawesome --quiet")
                 }
+            }
+        }
+
+
+        // Ejecutar las etapas en paralelo
+        parallel parallelStages
+    }
+
+    post {
+        always {
+            stage('Publicar Reportes') {
+                echo "Publicando reportes..."
+                archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
             }
         }
     }

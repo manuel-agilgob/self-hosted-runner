@@ -1,7 +1,3 @@
-const fs = require('fs');
-const path = require('path');
-
-process.env.TOKEN
 
 context('Actions', () => {  
     it('Usa el token de la variable de ambiente', () => {
@@ -12,7 +8,7 @@ context('Actions', () => {
 
     it('Usa el token para generar un artefacto', () => {
         const token = Cypress.env('TOKEN');
-        const filePath = 'reports/token_p1.txt';
+        const filePath = 'reports/Usuario4_prueba2.txt';
         cy.task('writeFile', { filePath, content: token });
     });
 })
