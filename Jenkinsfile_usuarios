@@ -27,20 +27,22 @@ def crearParallelStage(String runnerName, List colaUsuarios, String rutaPruebas)
 
                 echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuario} con token ${token}"
 
-                def specList = sh(script: "ls ${rutaPruebas}/${carpetaUsuario}", returnStdout: true).trim().split('\n')
-                
+                def specList = sh(script: "ls ${rutaPruebas}/${carpetaUsuario}/tokens_*.cy.js", returnStdout: true).trim().split('\n') 
+                def specInExecution = ''
                 specList.each { spec ->
+                    specInExecution = "${rutaPruebas}/${carpetaUsuario}/${spec}"
+
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         try {
                             sh(script: """
                             npx cypress run \
-                            --spec ${rutaPruebas}/${carpetaUsuario}/${spec} \
+                            --spec ${spec} \
                             --reporter cypress-mochawesome-reporter \
                             --quiet \
                             --env TOKEN=${token}
                             """)
                         } catch (Exception e) {
-                            slackSend channel: 'D087F46G2D9', message: "La prueba ${rutaPruebas}/${carpetaUsuario} falló con ERROR: ${e.getMessage()}"
+                            slackSend channel: 'D087F46G2D9', message: "😨😨 La prueba ${spec} falló con ERROR: ${e.getMessage()}", color : " #ff5733"
                             throw e
                         }
                     }
@@ -59,6 +61,7 @@ node {
         echo "Clonando repositorio..."
         deleteDir()
         checkout scmGit(branches: [[name: '*/dev']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/manuel-agilgob/self-hosted-runner.git']])
+        sh 'mkdir reports'
     }
 
     stage('Instalar dependencias') {
@@ -89,15 +92,26 @@ node {
     stage('Generar reporte html'){
         echo "Generando reporte html..."
         sh "npx mochawesome-merge 'reports/.jsons/*.json' > reports/merged-report.json "
-        sh "npx marge --reportDir=reports --reportTitle='Reporte de pruebas Cypress' --reportFilename='Reporte compilado cypress' --inline reports/merged-report.json"
+        sh "npx marge --reportDir=reports --reportTitle='Reporte compilado cypress' --reportFilename='Reporte_ruebas_Cypress' --inline reports/merged-report.json"
     }
 
-    stage ('Generando artefactos'){
+    stage ('Generando artefactos') {
         echo "Publicando reportes..."
+        
+        // Archivar reportes (si existen)
         archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true 
-        slackUploadFile filePath: 'reports/Reporte de pruebas Cypress.html', initialComment: 'Reporte de ejecucion de pruebas Cypress/Jenkins'      
+        
+        // Verificar si el archivo existe y subirlo a Slack
+        def reportPath = "${env.WORKSPACE}/reports/Reporte_ruebas_Cypress.html"
+        sh "ls -l ${reportPath}" // Verificar existencia del archivo
+        
+        try {
+            slackUploadFile filePath: reportPath, initialComment: 'Reporte de ejecución de pruebas Cypress/Jenkins', channels: 'D087F46G2D9'
+            echo "Archivo subido correctamente a Slack."
+        } catch (Exception e) {
+            echo "Error al subir el archivo a Slack: ${e.message}"
+        }
     }
-
 
 }
 

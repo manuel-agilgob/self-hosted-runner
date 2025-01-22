@@ -10,6 +10,8 @@ context('Actions', () => {
         const token = Cypress.env('TOKEN');
         const filePath = 'reports/Usuario4_prueba2.txt';
         cy.task('writeFile', { filePath, content: token });
+
+        Aqui genero el error !!!
     });
 })
 
