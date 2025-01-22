@@ -20,7 +20,7 @@ def obtenerToken(username, password) {
 node {
 
 
-    stage('Checkout') {
+    stage('Clonar repositorio') {
         echo "Clonando repositorio..."
         deleteDir()
         checkout scmGit(branches: [[name: '*/dev']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/manuel-agilgob/self-hosted-runner.git']])
@@ -32,19 +32,16 @@ node {
     }
 
 
-
     def rutaPruebas = "cypress/e2e"
     def carpetasUsuarios = sh(script: "ls ${rutaPruebas}", returnStdout: true).trim().split('\n')
     def colaUsuarios = carpetasUsuarios as List
     echo "Carpetas por usuario: ${carpetasUsuarios}"
 
-
     def carpetaUsuarioRunner1 = ''
     def carpetaUsuarioRunner2 = ''
 
-    stage('Generacion dinamica de stages de pruebas') {
+    stage('Generacion y ejecucion de stages de pruebas cypress') {
         def parallelStages = [:]
-
 
         // Definir las etapas paralelas
         parallelStages['Runner 1'] = {
@@ -53,21 +50,28 @@ node {
                 stage("Stage for ${rutaPruebas}/${carpetaUsuarioRunner1}") {
                     
                     
-                    def token_r1 = obtenerToken("Juan Tuercas", "Calle falsa 123")
+                    def token_r1 = obtenerToken("Pedro Pistolas", "Siempre viva 123")
 
                     echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner1} con token ${token_r1}"
 
-                    sh(script: """
-                        npx cypress run \
-                        --spec ${rutaPruebas}/${carpetaUsuarioRunner1}/*cy.js \
-                        --reporter cypress-mochawesome-reporter \
-                        --quiet  \
-                        --env TOKEN=${token_r1}""")
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        try {
+                            
+                            sh(script: """
+                            npx cypress run \
+                            --spec ${rutaPruebas}/${carpetaUsuarioRunner1}/*cy.js \
+                            --reporter cypress-mochawesome-reporter \
+                            --quiet  \
+                            --env TOKEN=${token_r1}""")
+
+                        } catch (Exception e) {
+                            slackSend channel: 'D087F46G2D9', message: "La prueba ${rutaPruebas}/${carpetaUsuarioRunner1} falló con ERROR: ${e.getMessage()}"
+                            throw e 
+                        }
+                    }
                 }
             }
         }
-
-
 
         parallelStages['Runner 2'] = {
             while (!colaUsuarios.isEmpty()){
@@ -79,12 +83,21 @@ node {
 
                     echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner2} con token ${token_r2}"
 
-                    sh(script: """
-                        npx cypress run \
-                        --spec ${rutaPruebas}/${carpetaUsuarioRunner2}/*cy.js \
-                        --reporter cypress-mochawesome-reporter \
-                        --quiet  \
-                        --env TOKEN=${token_r2}""")
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        try {
+
+                            sh(script: """
+                            npx cypress run \
+                            --spec ${rutaPruebas}/${carpetaUsuarioRunner2}/*cy.js \
+                            --reporter cypress-mochawesome-reporter \
+                            --quiet  \
+                            --env TOKEN=${token_r2}""")
+
+                        } catch (Exception e) {
+                            slackSend channel: 'D087F46G2D9', message: "La prueba ${rutaPruebas}/${carpetaUsuarioRunner2} falló con ERROR: ${e.getMessage()}"
+                            throw e 
+                        }
+                    }
                 }
             }
         }
@@ -105,3 +118,6 @@ node {
         archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true        
     }
 }
+
+
+
