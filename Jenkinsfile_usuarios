@@ -17,6 +17,35 @@ def obtenerToken(username, password) {
 }
 
 
+// Función para generar etapas paralelas para un runner
+def crearParallelStage(String runnerName, List colaUsuarios, String rutaPruebas) {
+    return {
+        while (!colaUsuarios.isEmpty()) {
+            def carpetaUsuario = colaUsuarios.remove(0) // Remover el primer usuario
+            stage("Stage for ${rutaPruebas}/${carpetaUsuario}") {
+                def token = obtenerToken("Pedro Pistolas", "Siempre viva 123")
+                echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuario} con token ${token}"
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    try {
+                        sh(script: """
+                        npx cypress run \
+                        --spec ${rutaPruebas}/${carpetaUsuario}/*cy.js \
+                        --reporter cypress-mochawesome-reporter \
+                        --quiet \
+                        --env TOKEN=${token}
+                        """)
+                    } catch (Exception e) {
+                        slackSend channel: 'D087F46G2D9', message: "La prueba ${rutaPruebas}/${carpetaUsuario} falló con ERROR: ${e.getMessage()}"
+                        throw e
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
 node {
 
 
@@ -37,69 +66,13 @@ node {
     def colaUsuarios = carpetasUsuarios as List
     echo "Carpetas por usuario: ${carpetasUsuarios}"
 
-    def carpetaUsuarioRunner1 = ''
-    def carpetaUsuarioRunner2 = ''
-
     stage('Generacion y ejecucion de stages de pruebas cypress') {
         def parallelStages = [:]
 
-        parallelStages['Runner 1'] = {
-            while (!colaUsuarios.isEmpty()){
-                carpetaUsuarioRunner1 = colaUsuarios.remove(0)  // Remover el primer usuario
-                stage("Stage for ${rutaPruebas}/${carpetaUsuarioRunner1}") {
-                    
-                    
-                    def token_r1 = obtenerToken("Pedro Pistolas", "Siempre viva 123")
-
-                    echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner1} con token ${token_r1}"
-
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        try {
-                            
-                            sh(script: """
-                            npx cypress run \
-                            --spec ${rutaPruebas}/${carpetaUsuarioRunner1}/*cy.js \
-                            --reporter cypress-mochawesome-reporter \
-                            --quiet  \
-                            --env TOKEN=${token_r1}""")
-
-                        } catch (Exception e) {
-                            slackSend channel: 'D087F46G2D9', message: "La prueba ${rutaPruebas}/${carpetaUsuarioRunner1} falló con ERROR: ${e.getMessage()}"
-                            throw e 
-                        }
-                    }
-                }
-            }
-        }
-
-        parallelStages['Runner 2'] = {
-            while (!colaUsuarios.isEmpty()){
-                carpetaUsuarioRunner2 = colaUsuarios.remove(0)  // Remover el primer usuario
-                stage("Stage for ${rutaPruebas}/${carpetaUsuarioRunner2}") {
-                    
-                    
-                    def token_r2 = obtenerToken("Pedro Pistolas", "Siempre viva 123") 
-
-                    echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner2} con token ${token_r2}"
-
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        try {
-
-                            sh(script: """
-                            npx cypress run \
-                            --spec ${rutaPruebas}/${carpetaUsuarioRunner2}/*cy.js \
-                            --reporter cypress-mochawesome-reporter \
-                            --quiet  \
-                            --env TOKEN=${token_r2}""")
-
-                        } catch (Exception e) {
-                            slackSend channel: 'D087F46G2D9', message: "La prueba ${rutaPruebas}/${carpetaUsuarioRunner2} falló con ERROR: ${e.getMessage()}"
-                            throw e 
-                        }
-                    }
-                }
-            }
-        }
+        parallelStages['Runner 1'] = crearParallelStage('Runner 1', colaUsuarios, rutaPruebas)
+        parallelStages['Runner 2'] = crearParallelStage('Runner 2', colaUsuarios, rutaPruebas)
+        // parallelStages['Runner 3'] = crearParallelStage('Runner 3', colaUsuarios, rutaPruebas)
+        // parallelStages['Runner 4'] = crearParallelStage('Runner 4', colaUsuarios, rutaPruebas)
 
         parallel parallelStages
     }
@@ -112,8 +85,11 @@ node {
 
     stage ('Generando artefactos'){
         echo "Publicando reportes..."
-        archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true        
+        archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true 
+        slackUploadFile filePath: 'reports/Compilado reportes.html', initialComment: 'Reporte de ejecucion de pruebas Cypress/Jenkins', channels: 'D087F46G2D9'       
     }
+
+
 }
 
 
