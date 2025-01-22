@@ -35,7 +35,7 @@ node {
                 carpetaUsuarioRunner1 = colaUsuarios.remove(0)  // Remover el primer usuario
                 stage("Stage for ${rutaPruebas}/${carpetaUsuarioRunner1}") {
                     echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner1}"
-                    sh(script: "npx cypress run --spec ${rutaPruebas}/${carpetaUsuarioRunner1}/*cy.js --reporter mochawesome --quiet")
+                    sh(script: "npx cypress run --spec ${rutaPruebas}/${carpetaUsuarioRunner1}/*cy.js --reporter cypress-mochawesome-reporter --quiet")
                 }
             }
         }
@@ -45,8 +45,25 @@ node {
             while (!colaUsuarios.isEmpty()){
                 carpetaUsuarioRunner2 = colaUsuarios.remove(0)  // Remover el primer usuario
                 stage("Stage for ${rutaPruebas}/${carpetaUsuarioRunner2}") {
-                    echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner2}"
-                    sh(script: "npx cypress run --spec ${rutaPruebas}/${carpetaUsuarioRunner2}/*cy.js --reporter mochawesome --quiet")
+                    
+                    def token_r1 = sh(
+                            script: '''
+                                curl -X POST http://192.168.1.73:3000/token \
+                                -H "Content-Type: application/json" \
+                                -d '{"username": "value1", "password": "value2"}' \
+                                -s --fail
+                            ''',
+                            returnStdout: true
+                        ).trim()
+
+                    echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner2} con token ${token_r1}"
+
+                    sh(script: """
+                        npx cypress run \
+                        --spec ${rutaPruebas}/${carpetaUsuarioRunner2}/*cy.js \
+                        --reporter cypress-mochawesome-reporter \
+                        --quiet  \
+                        --env TOKEN=${token_r1}""")
                 }
             }
         }
@@ -56,12 +73,13 @@ node {
         parallel parallelStages
     }
 
-    post {
-        always {
-            stage('Publicar Reportes') {
-                echo "Publicando reportes..."
-                archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
-            }
-        }
+    stage('Generar reporte html'){
+        echo "Generando reporte html..."
+        sh "npx marge --reportDir=cypress/reports/mochawesome-report --reportTitle='Reporte de pruebas Cypress'"
+    }
+
+    stage {
+        echo "Publicando reportes..."
+        archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true        
     }
 }
