@@ -1,5 +1,22 @@
 // Scripted Pipeline para ejecutar tareas en paralelo para cada usuario
 
+
+def obtenerToken(username, password) {
+    def response = sh(
+        script: """
+            curl -X POST http://192.168.1.73:3000/token \
+            -H "Content-Type: application/json" \
+            -d '{"username": "${username}", "password": "${password}"}' \
+            -s --fail
+        """,
+        returnStdout: true
+    ).trim()
+    
+    def json = new groovy.json.JsonSlurper().parseText(response)
+    return json.token
+}
+
+
 node {
 
 
@@ -34,11 +51,22 @@ node {
             while (!colaUsuarios.isEmpty()){
                 carpetaUsuarioRunner1 = colaUsuarios.remove(0)  // Remover el primer usuario
                 stage("Stage for ${rutaPruebas}/${carpetaUsuarioRunner1}") {
-                    echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner1}"
-                    sh(script: "npx cypress run --spec ${rutaPruebas}/${carpetaUsuarioRunner1}/*cy.js --reporter cypress-mochawesome-reporter --quiet")
+                    
+                    
+                    def token_r1 = obtenerToken("Juan Tuercas", "Calle falsa 123")
+
+                    echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner1} con token ${token_r1}"
+
+                    sh(script: """
+                        npx cypress run \
+                        --spec ${rutaPruebas}/${carpetaUsuarioRunner1}/*cy.js \
+                        --reporter cypress-mochawesome-reporter \
+                        --quiet  \
+                        --env TOKEN=${token_r1}""")
                 }
             }
         }
+
 
 
         parallelStages['Runner 2'] = {
@@ -46,24 +74,17 @@ node {
                 carpetaUsuarioRunner2 = colaUsuarios.remove(0)  // Remover el primer usuario
                 stage("Stage for ${rutaPruebas}/${carpetaUsuarioRunner2}") {
                     
-                    def token_r1 = sh(
-                            script: '''
-                                curl -X POST http://192.168.1.73:3000/token \
-                                -H "Content-Type: application/json" \
-                                -d '{"username": "value1", "password": "value2"}' \
-                                -s --fail
-                            ''',
-                            returnStdout: true
-                        ).trim()
+                    
+                    def token_r2 = obtenerToken("Pedro Pistolas", "Siempre viva 123")
 
-                    echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner2} con token ${token_r1}"
+                    echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner2} con token ${token_r2}"
 
                     sh(script: """
                         npx cypress run \
                         --spec ${rutaPruebas}/${carpetaUsuarioRunner2}/*cy.js \
                         --reporter cypress-mochawesome-reporter \
                         --quiet  \
-                        --env TOKEN=${token_r1}""")
+                        --env TOKEN=${token_r2}""")
                 }
             }
         }
@@ -75,10 +96,11 @@ node {
 
     stage('Generar reporte html'){
         echo "Generando reporte html..."
-        sh "npx marge --reportDir=cypress/reports/mochawesome-report --reportTitle='Reporte de pruebas Cypress'"
+        sh "npx mochawesome-merge 'reports/.jsons/*.json' > reports/merged-report.json "
+        sh "npx marge --reportDir=reports --reportTitle='Reporte de pruebas Cypress' --reportFilename='Reporte compilado cypress' --inline reports/merged-report.json"
     }
 
-    stage {
+    stage ('Generando artefactos'){
         echo "Publicando reportes..."
         archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true        
     }
