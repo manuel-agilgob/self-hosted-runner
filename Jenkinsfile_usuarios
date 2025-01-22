@@ -43,7 +43,6 @@ node {
     stage('Generacion y ejecucion de stages de pruebas cypress') {
         def parallelStages = [:]
 
-        // Definir las etapas paralelas
         parallelStages['Runner 1'] = {
             while (!colaUsuarios.isEmpty()){
                 carpetaUsuarioRunner1 = colaUsuarios.remove(0)  // Remover el primer usuario
@@ -79,7 +78,7 @@ node {
                 stage("Stage for ${rutaPruebas}/${carpetaUsuarioRunner2}") {
                     
                     
-                    def token_r2 = obtenerToken("Pedro Pistolas", "Siempre viva 123")
+                    def token_r2 = obtenerToken("Pedro Pistolas", "Siempre viva 123") 
 
                     echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuarioRunner2} con token ${token_r2}"
 
@@ -102,8 +101,6 @@ node {
             }
         }
 
-
-        // Ejecutar las etapas en paralelo
         parallel parallelStages
     }
 

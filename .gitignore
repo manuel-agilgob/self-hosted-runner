@@ -9,9 +9,15 @@ cypress/screenshots/
 cypress/videos/
 cypress/reports/
 runner-results
+cypress/parallel-weights.json
 
 # Reports
 reports
 
 # Environment variables
 .env
+
+# IDE & personal scripts
+force_commit.bat
+
+
