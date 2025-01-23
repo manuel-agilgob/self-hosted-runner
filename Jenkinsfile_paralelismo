@@ -5,7 +5,7 @@
 pipeline {
     agent any
 
-    tools {nodejs "node"}
+    tools {nodejs "node23"}
 
     stages {
         stage('Install Dependencies') {
@@ -13,48 +13,46 @@ pipeline {
                 script {
                     if (fileExists('package.json')) {
                         sh 'npm install'
+                        sh 'mkdir reports' // Para que no caiga en error si no existe la carpeta en las pruebas de tokens
                     } else {
                         error 'package.json not found'
                     }
                 }
+               
             }
         }
 
         stage('Run Cypress Tests in Parallel with jenkins parallel') {
-
             parallel {
                 stage('Run Actions Tests') {
                     steps {
                         script {
-                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/actions.cy.js" --reporter=cypress-mochawesome-reporter'
+                            token1 = "TOKEN-RANDOM1"
+                            sh "npx cypress-parallel -s cy:run -t 2 -d 'cypress/e2e/Usuario1/*.cy.js' --reporter=cypress-mochawesome-reporter --env TOKEN=${token1}"
                         }
                     }
                 }
                 stage('Run Assertions Tests') {
                     steps {
+                        
                         script {
-                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/assertions.cy.js" --reporter=cypress-mochawesome-reporter'
+                            token2 = "TOKEN-RANDOM2"
+                            sh "npx cypress-parallel -s cy:run -t 2 -d 'cypress/e2e/Usuario2/*.cy.js' --reporter=cypress-mochawesome-reporter --env TOKEN=${token2}"
                         }
                     }
                 }
                 stage('Run Location Tests') {
                     steps {
+                        
                         script {
-                            sh 'npx cypress run --headless --spec "cypress/e2e/grupo1/location.cy.js" --reporter=cypress-mochawesome-reporter'
+                            token3 = "TOKEN-RANDOM3"
+                            sh "npx cypress-parallel -s cy:run -t 2 -d 'cypress/e2e/Usuario3/*.cy.js' --reporter=cypress-mochawesome-reporter --env TOKEN=${token3}"
                         }
-                    }
+                    } 
                 }
             }
         }
 
-        // stage('Run Cypress Test in Parallel using cypress-parallel y usando tokens') {
-        //     steps {
-        //         script {
-        //              sh 'npx cypress-parallel -s cy:run -t 3 -d "cypress/e2e/grupo3_token/*.cy.js" -- --reporter=cypress-mochawesome-reporter'
-        //         }
-        //     }
-        // }
-       
 
     }
 
@@ -63,7 +61,7 @@ pipeline {
 
             // Merge de los reportes JSON generados
             script {
-                sh 'npx mochawesome-merge "reports/.jsons/*.json" > reports/merged-report.json'
+                sh 'npx mochawesome-merge "cypress/reports/html/.jsons/*.json" > reports/merged-report.json'
                 sh 'npx marge reports/merged-report.json --reportFilename Reporte.html --reportDir reports --inline=true'
                 archiveArtifacts artifacts: 'reports/Reporte.html', allowEmptyArchive: false
                 archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true

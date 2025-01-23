@@ -1,4 +1,8 @@
 // Scripted Pipeline para ejecutar tareas en paralelo para cada usuario
+// Se agrega la opcion de parametrizar 
+// - las credenciales de los usuarios
+// - la cantidad de runnes que estan en ejecucion
+// - 
 
 
 def obtenerToken(username, password) {

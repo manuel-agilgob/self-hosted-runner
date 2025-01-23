@@ -1,0 +1,156 @@
+// Scripted Pipeline para ejecutar tareas en paralelo para cada usuario
+// Se agrega la opcion de parametrizar 
+// - las credenciales de los usuarios
+// - la cantidad de runners que estan en ejecucion
+// - 
+
+properties([
+    parameters([
+        string(name: 'NUMERO_DE_RUNNERS', defaultValue: '3', description: 'Número de runners para ejecutar en paralelo'),
+        string(name: 'SLACK_CHANNEL', defaultValue: 'D087F46G2D9', description: 'Canal de Slack para notificaciones'),
+        string(name: "TOKEN_ENDPOINT", defaultValue: "http://192.168.1.67:3000/token", description: "URL del endpoint para obtener token"),
+        string(name: "RUTA_PRUEBAS", defaultValue: "cypress/e2e", description: "Ruta de las pruebas de cypress"),
+        string(name: "GIT_REPOSITORY", defaultValue: 'https://github.com/manuel-agilgob/self-hosted-runner.git', description: "ID de las credenciales almacenadas en Jenkins"),
+        string(name: "GIT_BRANCH", defaultValue: '*/parametrizable', description: "Rama del repositorio a clonar")
+    ])
+])
+
+
+
+def obtenerToken(username, password) {
+    def response = sh(
+        script: """
+            curl -X POST "${params.TOKEN_ENDPOINT}" \
+            -H "Content-Type: application/json" \
+            -d '{"username": "${username}", "password": "${password}"}' \
+            -s --fail
+        """,
+        returnStdout: true
+    ).trim()
+    
+    def json = new groovy.json.JsonSlurper().parseText(response)
+    return json.token
+}
+
+
+// Función para generar etapas paralelas para un runner
+def crearParallelStage(String runnerName, List colaUsuarios, String rutaPruebas) {
+    return {
+        while (!colaUsuarios.isEmpty()) {
+            def carpetaUsuario = colaUsuarios.remove(0) // Remover el primer usuario
+            stage("Stage for ${rutaPruebas}/${carpetaUsuario}") {
+                def username = carpetaUsuario
+                def password = credentials(username) // Retorna el valor almacenado en Jenkins como secret text
+                def token = obtenerToken(username, password)
+
+                echo "Ejecutando pruebas para ${rutaPruebas}/${carpetaUsuario} con token ${token}"
+
+                def specList = sh(script: "ls ${rutaPruebas}/${carpetaUsuario}/*.cy.js", returnStdout: true).trim().split('\n') 
+                def specInExecution = ''
+                specList.each { spec ->
+                    specInExecution = "${rutaPruebas}/${carpetaUsuario}/${spec}"
+
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        try {
+                            sh(script: """
+                            npx cypress run \
+                            --spec ${spec} \
+                            --reporter cypress-mochawesome-reporter \
+                            --quiet \
+                            --env TOKEN=${token}
+                            """)
+                        } catch (Exception e) {
+
+                            def errorMessage = e.getMessage()
+                            def stackTrace = e.getStackTrace().join('\n')
+                           
+                            slackSend(
+channel: params.SLACK_CHANNEL,
+color: "red",
+message: """😨 *La prueba ${spec} genero un error*:
+*ERROR*: ${errorMessage}
+*TRABAJO EJECUTADO:* ${env.JOB_NAME} 
+*ENLACE AL BUILD:* ${env.BUILD_URL}
+*NUMERO DE BUILD:* ${env.BUILD_NUMBER}
+*DETALLES:* ```${stackTrace}```"""
+
+                            )
+                            throw e // Lanza el error nuevamente para cambiar el estado del stage a FAILURE
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+node {
+
+    stage('Clonar repositorio') {
+        slackSend( channels: params.SLACK_CHANNEL, color: 'good', message: "⚗️🧪🔍 Iniciando la ejecucion de pruebas en Jenkins ${env.JOB_NAME}:${env.BUILD_NUMBER}")
+        echo "Clonando repositorio..."
+        deleteDir()
+        checkout scmGit(branches: [[name: params.GIT_BRANCH ]], extensions: [], userRemoteConfigs: [[url: params.GIT_REPOSITORY ]])
+        sh 'mkdir -p reports' // Para que no caiga en error si no existe la carpeta en las pruebas de tokens
+    }
+
+    stage('Instalar dependencias') {
+        echo "Instalando dependencias..."
+        sh "npm install"  
+    }
+
+    stage('Generacion y ejecucion de stages de pruebas cypress') {
+
+        def rutaPruebas = params.RUTA_PRUEBAS
+        def carpetasUsuarios = sh(script: "ls ${rutaPruebas}", returnStdout: true).trim().split('\n')
+        def colaUsuarios = carpetasUsuarios as List
+        echo "Carpetas por usuario: ${carpetasUsuarios}"
+
+        def parallelStages = [:]
+        int numeroDeRunners = params.NUMERO_DE_RUNNERS as int
+
+        for (int i = 1; i <= numeroDeRunners; i++) {
+            def runnerName = "Runner ${i}"
+            parallelStages[runnerName] = crearParallelStage(runnerName, colaUsuarios, rutaPruebas)
+        }
+
+        parallel parallelStages 
+    }
+
+    stage('Generar reporte html'){
+        echo "Generando reporte html..."
+        sh "npx mochawesome-merge 'reports/.jsons/*.json' > reports/merged-report.json "
+        sh "npx marge --reportDir=reports --reportTitle='Reporte compilado cypress' --reportFilename='ReportePruebasCypress' --inline reports/merged-report.json"
+    }
+
+    stage ('Artefactos y resultados de las pruebas') {
+        echo "Publicando reportes..."
+        
+        // Archivar reportes (si existen)
+        archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true 
+        
+        // Verificar si el archivo existe y subirlo a Slack
+        def reportPath = "${env.WORKSPACE}/reports/ReportePruebasCypress.html"
+        sh "ls -l ${reportPath}" // Verificar existencia del archivo
+        
+        try {
+            slackUploadFile filePath: reportPath, initialComment: 'Reporte de ejecución de pruebas Cypress/Jenkins', channels: params.SLACK_CHANNEL
+            echo "Archivo subido correctamente a Slack."
+        } catch (Exception e) {
+            echo "Error al subir el archivo a Slack: ${e.message}"
+        }
+
+        publishHTML(target: [allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true, 
+            reportDir: 'reports', reportFiles: 'ReportePruebasCypress.html', 
+            reportName: 'ReportePruebasCypress'])
+
+        slackSend( channels: params.SLACK_CHANNEL, color: 'good', message: "📈📊 Consulta el reporte de pruebas en Jenkins: ${env.BUILD_URL}ReportePruebasCypress")
+
+    }
+
+}
+
+
+
