@@ -62,7 +62,7 @@ def crearParallelStage(String runnerName, List colaUsuarios, String rutaPruebas)
                         } catch (Exception e) {
 
                             def errorMessage = e.getMessage()
-                            def stackTrace = e.getStackTrace().join('\n')
+                            def stackTrace = e.getStackTrace().join('\n') //Requiere aprovar el script en la consola de Jenkins
                            
                             slackSend(
 channel: params.SLACK_CHANNEL,
