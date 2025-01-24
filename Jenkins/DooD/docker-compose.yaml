@@ -1,0 +1,22 @@
+version: "3.9"
+
+volumes:
+  jenkins-home:
+
+networks:
+  jenkins:
+
+services:
+  jenkins:
+    image: jenkins-plus-cypress
+    container_name: jenkins
+    networks:
+      - jenkins
+    environment:
+      JAVA_OPTS: "-Djava.awt.headless=true"
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins-home:/var/jenkins_home
