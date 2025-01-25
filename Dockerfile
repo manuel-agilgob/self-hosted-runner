@@ -1,3 +1,13 @@
+# Este Dockerfile crea una imagen de Jenkins personalizada con las dependencias necesarias
+# para ejecutar pruebas en Cypress y desactivar la Política de Seguridad de Contenidos (CSP).
+#
+# - Basado en la imagen oficial de Jenkins LTS.
+# - Actualiza los paquetes del sistema e instala las dependencias necesarias para Cypress.
+# - Instala Node.js desde el repositorio oficial de NodeSource.
+# - Desactiva la CSP en Jenkins mediante un script Groovy.
+#
+# Etiqueta de la imagen: Jenkins con dependencias para ejecutar pruebas en Cypress, mostrar reportes de pruebas y desactivar CSP.
+
 FROM jenkins/jenkins:lts
 USER root
 

@@ -1,0 +1,61 @@
+def getPassword(String username) {
+    return credentials("${username}")
+}
+
+def getUniqueToken(String username, String password, String url) {
+    return httpRequest(url: url,
+        contentType: 'APPLICATION_JSON', 
+        httpMode: 'POST', 
+        requestBody: "{\"username\":\"${username}\",\"password\":\"${password}\"}").data.token
+}
+
+
+pipeline{
+
+    agent any
+
+    environment{
+        parameters{
+            [
+                string(name: 'url', defaultValue: 'http://192.168.1.67:3000/token', description: 'URL to get the token'),
+                string(name: 'testFolder', defaultValue: 'cypress/e2e/', description: 'Folder where the tests are located')
+            ]
+        }
+    }
+
+    stage('Get cypress test names'){
+        steps{
+            script{
+                def credentials = [:]
+                def cypressTests = sh(script: "ls ${testFolder}", returnStdout: true).split()
+                cypressTests.each{ username ->
+                    credentials[username] = getPassword(username, getPassword(username), url) //almacena usuario : token
+                }
+
+            }
+        }
+    }
+
+    stages{
+
+        stage('Build Docker image'){
+            steps{
+                sh('docker build -t AgilgobCypressTesting -f Jenkins/DooD/Dockerfile_tests .')
+            }
+        }
+
+        stage('Test'){
+            steps{
+                echo 'Testing the project...'
+            }
+        }
+
+        stage('Deploy'){
+            steps{
+                echo 'Deploying the project...'
+            }
+        }
+
+    }
+
+}

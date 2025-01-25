@@ -2,7 +2,7 @@
 
 docker volume create jenkins-dood
 docker network create jenkins
-docker build -t dood-jenkins-img ./
+docker build -t dood-jenkins-img -f Dockerfile_jenkins ./
 
 docker run \
   --name dood-jenkins-cont \
