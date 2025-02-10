@@ -36,6 +36,7 @@ ARG testData
 ENV TEST_DATA=${testData}
 
 
+
 COPY run_tests.sh .
 RUN chmod +x run_tests.sh
 CMD [ "./run_tests.sh" ]
